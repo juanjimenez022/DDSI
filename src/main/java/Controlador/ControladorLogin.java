@@ -20,6 +20,7 @@ public class ControladorLogin {
     private Conexion conexion;
     private VistaMensajes vMensaje;
     private VistaInfoBD vInfodb;
+    private ControladorPrincipal CP;
 
     public ControladorLogin() {
 
@@ -59,6 +60,8 @@ public class ControladorLogin {
         } catch (ClassNotFoundException ex) {
             vMensaje.mensajeConsola("Error indeterminado ", ex.getMessage());
         }
+        CP = new ControladorPrincipal(conexion);
+        CP.menu();
         return conexion;
     }
 
