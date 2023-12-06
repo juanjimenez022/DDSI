@@ -4,74 +4,61 @@
  */
 package Controlador;
 
-import Modelo.Conexion;
-import Vista.VistaInfoBD;
+import Config.HibernateUtilMariaDB;
+import Config.HibernateUtilOracle;
 import Vista.VistaMensajes;
+import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.hibernate.SessionFactory;
 
 /**
  *
  * @author jujis
  */
 public class ControladorLogin {
-
-    private Conexion conexion;
-    private VistaMensajes vMensaje;
-    private VistaInfoBD vInfodb;
-    private ControladorPrincipal CP;
-
+    
+    private SessionFactory sessionFactory;
+    
+    Boolean BD = false; //True = Oracle, False = MariaDB
+    VistaMensajes vMensaje = new VistaMensajes();
+    
+    
+    private Connection conn = null;
+    
+    String sgbd;
+    String ip;
+    String service_bd;
+    String usuario;
+    String password;
+    
     public ControladorLogin() {
 
-        vMensaje = new VistaMensajes();
-        vInfodb = new VistaInfoBD();
         conectarBD();
-        try {
-            vInfodb.infoMetadatos(conexion.informacionBD());
-        } catch (SQLException ex) {
-            vMensaje.mensajeConsola("Error al obtener los metadatos de la base de datos ", ex.getMessage());
-        }
+        ControladorPrincipal controladorP = new ControladorPrincipal(sessionFactory.openSession());
+
         desconectarBD();
 
     }
 
-    private Conexion conectarBD() {
+    private void conectarBD() {
+        
         try {
-
-            String server = "oracle";
-            String ip = "172.17.20.39";
-            String bd = "etsi";
-            String u = "DDSI_021";
-            String p = "76088140";
-
-            if (true) {
-                server = "mariadb";
-                ip = "172.18.1.241";
-                bd = "DDSI_021";
-                u = "DDSI_021";
-                p = "76088140";
+            if (BD) {
+                sessionFactory = HibernateUtilOracle.getSessionFactory();
+            } else if (!BD) {
+                sessionFactory = HibernateUtilMariaDB.getSessionFactory();
             }
-
-            conexion = new Conexion(server, ip, bd, u, p);
-            vMensaje.mensajeConsola("Conexión Correcta");
-        } catch (SQLException sqle) {
-            vMensaje.mensajeConsola("Error de conexión ", sqle.getMessage());
-        } catch (ClassNotFoundException ex) {
-            vMensaje.mensajeConsola("Error indeterminado ", ex.getMessage());
+            vMensaje.mensajeConsola("Conexión Correcta con Hibernate");
+        } catch (ExceptionInInitializerError e) {
+            Throwable cause = e.getCause();
+            System.out.println("Error en la conexión. Revise el fichero .cfg.xml: " + cause.getMessage());
         }
-        CP = new ControladorPrincipal(conexion);
-        CP.menu();
-        return conexion;
+
     }
 
     private void desconectarBD() {
-
-        try {
-            conexion.desconexion();
-        } catch (SQLException ex) {
-            vMensaje.mensajeConsola("Error al desconectar ", ex.getMessage());
-        }
+        
+        sessionFactory.close();
 
     }
 
